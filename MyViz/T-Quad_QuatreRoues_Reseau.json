@@ -4,6 +4,7 @@
 	"plugins": [],
 	"panes": [
 		{
+			"title": "Télémétrie",
 			"width": 1,
 			"row": {
 				"2": 9,
@@ -135,7 +136,7 @@
 				{
 					"type": "joypad4roues",
 					"settings": {
-						"title": "Vitesses longitudinale et de rotation",
+						"title": "Vitesses",
 						"datasourcename": "ws",
 						"variablevxref": "datasources[\"ws\"][\"vxref\"]",
 						"variablevyref": "datasources[\"ws\"][\"vyref\"]",
@@ -170,7 +171,7 @@
 			]
 		},
 		{
-			"title": "Moniteur série",
+			"title": "Moniteur",
 			"width": 1,
 			"row": {
 				"3": 21,
@@ -202,7 +203,8 @@
 				"host": "ws://192.168.0.199:9090/ws",
 				"variables_to_send": "vxref,vyref,xiref,source_ximes",
 				"refresh_rate": "500",
-				"checksum": "none"
+				"checksum": "none",
+				"name": "ws"
 			}
 		}
 	],
