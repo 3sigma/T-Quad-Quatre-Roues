@@ -1,7 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyduino_pcduino import * # importe les fonctions Arduino pour Python
+##################################################################################
+# Programme de contrôle du robot T-Quad avec 4 roues holonomes (roues Mecanum)
+# disponible à l'adresse:
+# http://boutique.3sigma.fr/12-robots
+#
+# Auteur: 3Sigma
+# Version 1.1.1 - 16/12/2016
+##################################################################################
+
+# Importe les fonctions Arduino pour Python
+from pyduino_pcduino import *
 
 # Imports pour la communication i2c avec l'Arduino Mega
 from mega import Mega
@@ -219,7 +229,7 @@ def CalculVitesse():
         
     # Mesures
     vxmes = (omegaArriereDroit + omegaArriereGauche + omegaAvantDroit + omegaAvantGauche) * R / 4
-    vymes = (omegaArriereDroit - omegaArriereGauche - omegaAvantDroit + omegaAvantGauche) * R / 4
+    vymes = (-omegaArriereDroit + omegaArriereGauche + omegaAvantDroit - omegaAvantGauche) * R / 4
     ximes = (omegaArriereDroit - omegaArriereGauche + omegaAvantDroit - omegaAvantGauche) * R / W / 2
     
     # Lecture de la vitesse de rotation autour de la verticale
@@ -250,10 +260,10 @@ def CalculVitesse():
             commandeRot = PID(2, xiref, ximes, Kprot, Kirot, Kdrot, Tfrot, umax, umin, dt);
     
     # Transformation des commandes longitudinales et de rotation en tension moteurs
-    commandeArriereDroit = -(commandeLongi + commandeLat + commandeRot) # Tension négative pour faire tourner positivement ce moteur
-    commandeArriereGauche = commandeLongi - commandeLat - commandeRot
-    commandeAvantDroit = -(commandeLongi - commandeLat + commandeRot) # Tension négative pour faire tourner positivement ce moteur
-    commandeAvantGauche = commandeLongi + commandeLat - commandeRot
+    commandeArriereDroit = -(commandeLongi - commandeLat + commandeRot) # Tension négative pour faire tourner positivement ce moteur
+    commandeArriereGauche = commandeLongi + commandeLat - commandeRot
+    commandeAvantDroit = -(commandeLongi + commandeLat + commandeRot) # Tension négative pour faire tourner positivement ce moteur
+    commandeAvantGauche = commandeLongi - commandeLat - commandeRot
     
     CommandeMoteurs(commandeArriereDroit, commandeArriereGauche, commandeAvantDroit, commandeAvantGauche)
     
@@ -431,7 +441,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if jsonMessage.get('vyref') != None:
             vyref = float(jsonMessage.get('vyref')) / 100.
         if jsonMessage.get('xiref') != None:
-            xiref = -float(jsonMessage.get('xiref')) * math.pi / 180.
+            xiref = float(jsonMessage.get('xiref')) * math.pi / 180.
         if jsonMessage.get('source_ximes') != None:
             # Choix de la source de la vitesse de rotation mesurée: 1: gyro, 0: vitesse des roues
             source_ximes = int(jsonMessage.get('source_ximes'))
