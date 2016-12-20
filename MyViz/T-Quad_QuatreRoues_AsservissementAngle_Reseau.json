@@ -1,0 +1,235 @@
+{
+	"version": 1,
+	"allow_edit": true,
+	"plugins": [],
+	"panes": [
+		{
+			"title": "Télémétrie",
+			"width": 1,
+			"row": {
+				"2": 9,
+				"3": 7,
+				"4": 1,
+				"5": 7
+			},
+			"col": {
+				"2": 2,
+				"3": 2,
+				"4": 3,
+				"5": 3
+			},
+			"col_width": "2",
+			"widgets": [
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Vitesses de rotation",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"consigne_psi\"]",
+							"datasources[\"ws\"][\"psimes\"]",
+							"datasources[\"ws\"][\"intgz\"]"
+						],
+						"y_axis_min_range": "-0.1,0.1",
+						"include_legend": true,
+						"legendStr": "psiref,psimes,psigyro",
+						"height": 4,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"commande_rotation\"]"
+						],
+						"y_axis_min_range": "-1,1",
+						"include_legend": true,
+						"legendStr": "Commande",
+						"height": 4,
+						"pausable": true
+					}
+				}
+			]
+		},
+		{
+			"title": "Démarrage",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 9
+			},
+			"col": {
+				"3": 1,
+				"4": 2
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "sshcommand",
+					"settings": {
+						"title": "Marche / Arrêt de l'application",
+						"host": "192.168.0.199",
+						"login": "root",
+						"password": "tquad",
+						"oncommand": "/root/programmes_python/startQuatreRoues_AsservissementAngle.sh",
+						"offcommand": "/root/programmes_python/stopPython.sh",
+						"ontext": "ON",
+						"offtext": "OFF",
+						"initialstate": false
+					}
+				}
+			]
+		},
+		{
+			"title": "Consigne d'angle",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 5
+			},
+			"col": {
+				"3": 2,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"psiref\"]",
+						"initialvalue": 0,
+						"min": -180,
+						"max": 180,
+						"resolution": 1,
+						"resetvalue": 0,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Mesure de la vitesse de rotation",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 17
+			},
+			"col": {
+				"3": 3,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "switchbutton",
+					"settings": {
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"source_psimes\"]",
+						"yestext": "Gyro",
+						"notext": "Odo",
+						"initialstate": false
+					}
+				}
+			]
+		},
+		{
+			"title": "Moniteur",
+			"width": 1,
+			"row": {
+				"3": 19,
+				"4": 23
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": "1",
+			"widgets": [
+				{
+					"type": "textarea",
+					"settings": {
+						"nblines_window": "10",
+						"value": [
+							"datasources[\"ws\"][\"Raw\"]"
+						]
+					}
+				}
+			]
+		},
+		{
+			"title": "Gains",
+			"width": 1,
+			"row": {
+				"3": 5
+			},
+			"col": {
+				"3": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Kp",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"Kp\"]",
+						"initialvalue": 2,
+						"min": 0,
+						"max": 10,
+						"resolution": 1,
+						"resetvalue": 2,
+						"resetcaption": "Réinitialisation"
+					}
+				},
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Ki",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"Ki\"]",
+						"initialvalue": 1,
+						"min": 0,
+						"max": 10,
+						"resolution": 1,
+						"resetvalue": 1,
+						"resetcaption": "Réinitialisation"
+					}
+				},
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Kd",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"Kd\"]",
+						"initialvalue": 0.05,
+						"min": 0,
+						"max": 0.2,
+						"resolution": 3,
+						"resetvalue": 0.05,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		}
+	],
+	"datasources": [
+		{
+			"name": "ws",
+			"type": "websocket",
+			"settings": {
+				"host": "ws://192.168.0.199:9090/ws",
+				"variables_to_send": "psiref,source_psimes,Kp,Ki,Kd",
+				"refresh_rate": "500",
+				"checksum": "none"
+			}
+		}
+	],
+	"columns": 3
+}
