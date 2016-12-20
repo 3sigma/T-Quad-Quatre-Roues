@@ -34,7 +34,8 @@
 						"y_axis_min_range": "-0.2,0.2",
 						"include_legend": true,
 						"legendStr": "vxref,vxmes",
-						"height": 3
+						"height": 3,
+						"pausable": true
 					}
 				},
 				{
@@ -51,7 +52,8 @@
 						"y_axis_min_range": "-0.2,0.2",
 						"include_legend": true,
 						"legendStr": "vyref, vymes",
-						"height": 3
+						"height": 3,
+						"pausable": true
 					}
 				},
 				{
@@ -69,7 +71,8 @@
 						"y_axis_min_range": "-0.1,0.1",
 						"include_legend": true,
 						"legendStr": "xiref,ximes,xigyro",
-						"height": 3
+						"height": 3,
+						"pausable": true
 					}
 				},
 				{
@@ -86,7 +89,8 @@
 						"y_axis_min_range": "-10,10",
 						"include_legend": true,
 						"legendStr": "distance, distance filtrée",
-						"height": 3
+						"height": 3,
+						"pausable": true
 					}
 				}
 			]
