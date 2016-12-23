@@ -1,0 +1,337 @@
+{
+	"version": 1,
+	"allow_edit": true,
+	"plugins": [],
+	"panes": [
+		{
+			"title": "Démarrage",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 9
+			},
+			"col": {
+				"3": 1,
+				"4": 2
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "sshcommand",
+					"settings": {
+						"title": "Marche / Arrêt de l'application",
+						"host": "192.168.0.199",
+						"login": "root",
+						"password": "tquad",
+						"oncommand": "/root/programmes_python/startQuatreRoues_LateralDistance.sh",
+						"offcommand": "/root/programmes_python/stopPython.sh",
+						"ontext": "ON",
+						"offtext": "OFF",
+						"initialstate": false
+					}
+				}
+			]
+		},
+		{
+			"title": "Consigne de vitesse latérale (cm/s)",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 5
+			},
+			"col": {
+				"3": 3,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Suivant l'axe -y",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"vyref\"]",
+						"initialvalue": 0,
+						"min": -50,
+						"max": 50,
+						"resolution": 0,
+						"resetvalue": 0,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Consigne de distance (cm)",
+			"width": 1,
+			"row": {
+				"3": 1
+			},
+			"col": {
+				"3": 2
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"distref\"]",
+						"initialvalue": 20,
+						"min": 1,
+						"max": 50,
+						"resolution": 0,
+						"resetvalue": 20,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Distance filtrée",
+			"width": 1,
+			"row": {
+				"3": 5
+			},
+			"col": {
+				"3": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "text_widget",
+					"settings": {
+						"size": "regular",
+						"value": "datasources[\"ws\"][\"distanceFiltre\"]",
+						"animate": false,
+						"units": "cm"
+					}
+				}
+			]
+		},
+		{
+			"title": "Télémétrie",
+			"width": 1,
+			"row": {
+				"2": 9,
+				"3": 7,
+				"4": 1,
+				"5": 7
+			},
+			"col": {
+				"2": 2,
+				"3": 2,
+				"4": 3,
+				"5": 3
+			},
+			"col_width": "2",
+			"widgets": [
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Distances (cm)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"consigne_distance\"]",
+							"datasources[\"ws\"][\"distance\"]",
+							"datasources[\"ws\"][\"distanceFiltre\"]"
+						],
+						"y_axis_min_range": "0,1",
+						"include_legend": true,
+						"legendStr": "consigne,distance,distance filtrée",
+						"height": 4,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Vitesse latérale (cm/s)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"consigne_vy\"]",
+							"datasources[\"ws\"][\"vymes\"]"
+						],
+						"y_axis_min_range": "-1,1",
+						"include_legend": true,
+						"legendStr": "consigne,vymes",
+						"height": 4,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"commandeLongi\"]",
+							"datasources[\"ws\"][\"commandeLat\"]"
+						],
+						"y_axis_min_range": "-0.1,0.1",
+						"include_legend": true,
+						"legendStr": "commande longi,commande latérale",
+						"height": 4,
+						"pausable": true
+					}
+				}
+			]
+		},
+		{
+			"title": "Constante de temps filtre distance",
+			"width": 1,
+			"row": {
+				"3": 9,
+				"4": 9
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"tauFiltreDistance\"]",
+						"initialvalue": 0.5,
+						"min": 0,
+						"max": 1,
+						"resolution": 2,
+						"resetvalue": 0.5,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Gains asservissement en distance",
+			"width": 1,
+			"row": {
+				"3": 15,
+				"4": 9
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Kp",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"Kp\"]",
+						"initialvalue": 10,
+						"min": 0,
+						"max": 20,
+						"resolution": 1,
+						"resetvalue": 10,
+						"resetcaption": "Réinitialisation"
+					}
+				},
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Ki",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"Ki\"]",
+						"initialvalue": 2.5,
+						"min": 0,
+						"max": 10,
+						"resolution": 1,
+						"resetvalue": 2.5,
+						"resetcaption": "Réinitialisation"
+					}
+				},
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Kd",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"Kd\"]",
+						"initialvalue": 2,
+						"min": 0,
+						"max": 10,
+						"resolution": 1,
+						"resetvalue": 2,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Mesure de la vitesse de rotation",
+			"width": 1,
+			"row": {
+				"3": 29,
+				"4": 17
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"title": "0: Gyroscope - 1 : Odométrie",
+						"datasourcename": "ws",
+						"variable": "datasources[\"ws\"][\"rapport_xigz\"]",
+						"initialvalue": 0.5,
+						"min": 0,
+						"max": 1,
+						"resolution": 1,
+						"resetvalue": 0.5,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Moniteur",
+			"width": 1,
+			"row": {
+				"3": 35,
+				"4": 23
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": "1",
+			"widgets": [
+				{
+					"type": "textarea",
+					"settings": {
+						"nblines_window": "10",
+						"value": [
+							"datasources[\"ws\"][\"Raw\"]"
+						]
+					}
+				}
+			]
+		}
+	],
+	"datasources": [
+		{
+			"name": "ws",
+			"type": "websocket",
+			"settings": {
+				"host": "ws://192.168.0.199:9090/ws",
+				"variables_to_send": "distref,vyref,rapport_xigz,Kp,Ki,Kd,tauFiltreDistance",
+				"refresh_rate": "500",
+				"checksum": "none"
+			}
+		}
+	],
+	"columns": 3
+}
