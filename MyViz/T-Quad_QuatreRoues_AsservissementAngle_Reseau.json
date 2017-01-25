@@ -102,7 +102,6 @@
 				{
 					"type": "slider",
 					"settings": {
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"psiref\"]",
 						"initialvalue": 0,
 						"min": -180,
@@ -130,7 +129,6 @@
 				{
 					"type": "switchbutton",
 					"settings": {
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"source_psimes\"]",
 						"yestext": "Gyro",
 						"notext": "Odo",
@@ -178,7 +176,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Kp",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"Kp\"]",
 						"initialvalue": 2,
 						"min": 0,
@@ -192,7 +189,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Ki",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"Ki\"]",
 						"initialvalue": 1,
 						"min": 0,
@@ -206,7 +202,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Kd",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"Kd\"]",
 						"initialvalue": 0.05,
 						"min": 0,

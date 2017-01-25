@@ -49,7 +49,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Suivant l'axe -y",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"vyref\"]",
 						"initialvalue": 0,
 						"min": -50,
@@ -75,7 +74,6 @@
 				{
 					"type": "slider",
 					"settings": {
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"distref\"]",
 						"initialvalue": 20,
 						"min": 1,
@@ -198,7 +196,6 @@
 				{
 					"type": "slider",
 					"settings": {
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"tauFiltreDistance\"]",
 						"initialvalue": 0.5,
 						"min": 0,
@@ -227,7 +224,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Kp",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"Kp\"]",
 						"initialvalue": 10,
 						"min": 0,
@@ -241,7 +237,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Ki",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"Ki\"]",
 						"initialvalue": 2.5,
 						"min": 0,
@@ -255,7 +250,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "Kd",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"Kd\"]",
 						"initialvalue": 2,
 						"min": 0,
@@ -284,7 +278,6 @@
 					"type": "slider",
 					"settings": {
 						"title": "0: Gyroscope - 1 : Odométrie",
-						"datasourcename": "ws",
 						"variable": "datasources[\"ws\"][\"rapport_xigz\"]",
 						"initialvalue": 0.5,
 						"min": 0,
