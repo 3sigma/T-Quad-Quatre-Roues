@@ -6,19 +6,16 @@
 # disponible à l'adresse:
 # http://boutique.3sigma.fr/12-robots
 #
-# Suivi de mur
+# Asservissement de l'angle de rotation par rapport à la verticale
 #
 # Auteur: 3Sigma
-# Version 1.1.0 - 23/12/2016
+# Version 1.1.1 - 30/01/2017
 ##################################################################################
 
 # Importe les fonctions Arduino pour Python
-from pyduino_pcduino import *
+from pyduino import *
 
-# Imports pour la communication i2c avec l'Arduino Mega
-from mega import Mega
-mega = Mega()
-
+# Imports Généraux
 import time, sched
 import os
 import threading
@@ -39,15 +36,19 @@ import tornado.web
 import tornado.websocket
 import tornado.template
 
-# Gestion de l'écran OLED
-from oled.device import ssd1306
-from oled.render import canvas
-from PIL import ImageFont, ImageDraw
-
 # Gestion de l'IMU
-import FaBo9Axis_MPU9250
+from mpu9250 import MPU9250
 
 
+# Nom de l'hostname (utilisé ensuite pour savoir sur quel système
+# tourne ce programme)
+hostname = socket.gethostname()
+
+# Imports pour la communication i2c avec l'Arduino Mega
+from mega import Mega
+mega = Mega(hostname = hostname)
+
+# Moteurs
 Nmoy = 1
 
 omegaArriereDroit = 0.
@@ -76,38 +77,24 @@ commandeAvantGauche = 0.
 umax = 6. # valeur max de la tension de commande du moteur
 umin = -6. # valeur min (ou max en négatif) de la tension de commande du moteur
 
-# Asservissement
-Kplat = 3.3 # gain proportionnel du PID d'asservissement latéral
-Kilat = 82.0 # gain intégral du PID d'asservissement latéral
-Kdlat = 0. # gain dérivé du PID d'asservissement latéral
-Tflat = 0.02 # constante de temps de filtrage de l'action dérivée du PID d'asservissement latéral
-Kprot = 0.25 # gain proportionnel du PID d'asservissement de rotation
-Kirot = 10.2 # gain intégral du PID d'asservissement de rotation
-Kdrot = 0. # gain dérivé du PID d'asservissement de rotation
-Tfrot = 0.02 # constante de temps de filtrage de l'action dérivée du PID d'asservissement de rotation
-Kpdist = 10. # gain proportionnel du PID d'asservissement de distance
-Kidist = 2.5 # gain intégral du PID d'asservissement de distance
-Kddist = 2.0 # gain dérivé du PID d'asservissement de distance
-Tfdist = 0.5 # constante de temps de filtrage de l'action dérivée du PID d'asservissement de distance
+# Asservissements
+Kprot = 2 # gain proportionnel du PID d'asservissement de rotation
+Kirot = 0 # gain intégral du PID d'asservissement rotation
+Kdrot = 0.05 # gain dérivé du PID d'asservissement rotation
+Tfrot = 0.01 # constante de temps de filtrage de l'action dérivée du PID d'asservissement rotation
 I_x = [0., 0., 0., 0.]
 D_x = [0., 0., 0., 0.]
 yprec = [0., 0., 0., 0.] # mesure de la vitesse du moteur droit au calcul précédent
-vxmes = 0.
-vymes = 0.
-ximes = 0.
-commandeLongi = 0.
-commandeLat = 0.
+psimes = 0.
 commandeRot = 0.
 
 # Paramètres mécaniques
 R = 0.0225 # Rayon d'une roue
 W = 0.18 # Ecart entre le centre de rotation du robot et les roues
 
-# Variables utilisées pour les données reçues ou fixées
-distref = 20.
-vyref = 0.
-xiref = 0.
-rapport_xigz = 0.5
+# Variables utilisées pour les données reçues
+psiref = 0.
+source_psimes = 0
 
 # Timeout de réception des données
 timeout = 2
@@ -115,7 +102,7 @@ timeLastReceived = 0
 timedOut = False
 
 T0 = time.time()
-dt = 0.05
+dt = 0.01
 i = 0
 tprec = time.time()
 tdebut = 0
@@ -138,50 +125,49 @@ while not lectureTensionOK:
     except:
         print("Erreur lecture tension")
 
-# Déclarations pour le capteur de distance
-trig = 10
-echo = 13
-pulse_start = 0
-pulse_end = 0
-pulse_duration = 0
-last_pulse_duration = 0
-distance = 0
-distancePrec = 0
-distanceFiltre = 0
-tauFiltreDistance = 0.1
-
-# Déclaration pour l'IMU
+# Initialisation de l'IMU
 gz = 0.
+intgz = 0.
+offset_gyro = 0.
+if (hostname == "pcduino"):
+    I2CBUS = 2
+elif (hostname == "raspberrypi"):
+    I2CBUS = 1
+else:
+    # pcDuino par défaut
+    I2CBUS = 2
+    
+initIMU_OK = False
+while not initIMU_OK:
+    try:
+        imu = MPU9250(i2cbus=I2CBUS, address=0x69)
+        initIMU_OK = True
+    except:
+        print("Erreur init IMU")
 
+        
 #--- setup --- 
 def setup():
-    global imu
-    
-    # Initialisation de l'IMU
-    initIMU_OK = False
-    while not initIMU_OK:
-        try:
-            imu = FaBo9Axis_MPU9250.MPU9250()
-            initIMU_OK = True
-        except:
-            print("Erreur init IMU")
+    global offset_gyro
     
     # Initialisation des moteurs
     CommandeMoteurs(0, 0, 0, 0)
     
-    # Initialisation du capteur de distance
-    pinMode(trig, OUTPUT)
-    pinMode(echo, INPUT)
-    
-    digitalWrite(trig, LOW)
-    print "Attente du capteur de distance"
-    time.sleep(2)
-    
-    digitalWrite(trig, HIGH)
-    time.sleep(0.00001)
-    digitalWrite(trig, LOW)
-
-    
+    # Calibration du gyro sur 100 mesures
+    i = 0
+    somme_gyro = 0.
+    while (i < 100):
+        try:
+            gyro = imu.readGyro()
+            gz = gyro['z'] * math.pi / 180
+            somme_gyro = somme_gyro + gz
+            i = i + 1
+        except:
+            #print("Erreur lecture IMU")
+            pass
+    offset_gyro = somme_gyro/100.
+    print "Offset gyro", offset_gyro
+        
 # -- fin setup -- 
  
 # -- loop -- 
@@ -197,10 +183,8 @@ def CalculVitesse():
         tdebut, codeurArriereDroitDeltaPos, codeurArriereGaucheDeltaPos, codeurAvantDroitDeltaPos, codeurAvantGaucheDeltaPos, \
         commandeArriereDroit, commandeArriereGauche, commandeAvantDroit, commandeAvantGauche, \
         codeurArriereDroitDeltaPosPrec, codeurArriereGaucheDeltaPosPrec, codeurAvantDroitDeltaPosPrec, codeurAvantGaucheDeltaPosPrec, tprec, \
-        idecimLectureTension, decimLectureTension, decimErreurLectureTension, tensionAlim, commandeLongi, commandeLat, commandeRot, \
-        pulse_start, pulse_end, pulse_duration, last_pulse_duration, distance, distancePrec, \
-        distanceFiltre, tauFiltreDistance, imu, gz, R, W, vxmes, vymes, ximes, distref, vyref, xiref, font, rapport_xigz, \
-        Kpdist, Kidist, Kddist, Tfdist
+        idecimLectureTension, decimLectureTension, decimErreurLectureTension, tensionAlim, \
+        imu, gz, intgz, R, W, psimes, psiref, source_psimes, commandeRot, Kprot, Kirot, Kdrot, offset_gyro
     
     tdebut = time.time()
         
@@ -231,25 +215,29 @@ def CalculVitesse():
         codeurAvantDroitDeltaPos = codeurAvantDroitDeltaPosPrec
         codeurAvantGaucheDeltaPos = codeurAvantGaucheDeltaPosPrec
     
-    # A la fin de l'expression, on divise par 0.01 car c'est à cette cadence que le calcul des delta codeurs
-    # est effectué sur l'Arduino
-    omegaArriereDroit = -2 * ((2 * 3.141592 * codeurArriereDroitDeltaPos) / 1200) / (Nmoy * 0.01)  # en rad/s
-    omegaArriereGauche = 2 * ((2 * 3.141592 * codeurArriereGaucheDeltaPos) / 1200) / (Nmoy * 0.01)  # en rad/s
-    omegaAvantDroit = -2 * ((2 * 3.141592 * codeurAvantDroitDeltaPos) / 1200) / (Nmoy * 0.01)  # en rad/s
-    omegaAvantGauche = 2 * ((2 * 3.141592 * codeurAvantGaucheDeltaPos) / 1200) / (Nmoy * 0.01)  # en rad/s
+    omegaArriereDroit = -2 * ((2 * 3.141592 * codeurArriereDroitDeltaPos) / 1200) / (Nmoy * dt)  # en rad/s
+    omegaArriereGauche = 2 * ((2 * 3.141592 * codeurArriereGaucheDeltaPos) / 1200) / (Nmoy * dt)  # en rad/s
+    omegaAvantDroit = -2 * ((2 * 3.141592 * codeurAvantDroitDeltaPos) / 1200) / (Nmoy * dt)  # en rad/s
+    omegaAvantGauche = 2 * ((2 * 3.141592 * codeurAvantGaucheDeltaPos) / 1200) / (Nmoy * dt)  # en rad/s
+        
+    # Mesure
+    ximes = (omegaArriereDroit - omegaArriereGauche + omegaAvantDroit - omegaAvantGauche) * R / W / 2
     
-    # Mesures
-    vxmes = (omegaArriereDroit + omegaArriereGauche + omegaAvantDroit + omegaAvantGauche) * R / 4
-    vymes = (omegaArriereDroit - omegaArriereGauche - omegaAvantDroit + omegaAvantGauche) * R / 4
-    ximes = (omegaArriereDroit - omegaArriereGauche + omegaAvantDroit - omegaAvantGauche) * R / W / 4
+    # Intégration de la vitesse de rotation pour avoir l'angle
+    psimes = psimes + ximes * dt
     
     # Lecture de la vitesse de rotation autour de la verticale
     try:
         gyro = imu.readGyro()
-        gz = gyro['z'] * math.pi / 180
+        gz = gyro['z'] * math.pi / 180 - offset_gyro
+        if (ximes == 0.):
+            offset_gyro = offset_gyro + gz
     except:
         #print("Erreur lecture IMU")
         pass
+        
+    # Intégration de la vitesse de rotation pour avoir l'angle
+    intgz = intgz + gz * dt
 
     dt2 = time.time() - tprec
     tprec = time.time()
@@ -259,20 +247,18 @@ def CalculVitesse():
         timedOut = True
         
     if timedOut:
-        commandeLongi = 0.
-        commandeLat = 0.
         commandeRot = 0.
     else:
-        commandeLongi = PID(0, -distref/100., -distanceFiltre/100., Kpdist, Kidist, Kddist, Tfdist, umax, umin, dt2);
-        commandeLat = PID(1, vyref, vymes, Kplat, Kilat, Kdlat, Tflat, umax, umin, dt2);
-        # On mélange la mesure par odométrie et par le gyro
-        commandeRot = PID(2, xiref, ximes * (rapport_xigz) + gz * (1. - rapport_xigz), Kprot, Kirot, Kdrot, Tfrot, umax, umin, dt2);
+        if (source_psimes == 1):
+            commandeRot = PID(2, psiref, intgz, Kprot, Kirot, Kdrot, Tfrot, umax, umin, dt);
+        else:
+            commandeRot = PID(2, psiref, psimes, Kprot, Kirot, Kdrot, Tfrot, umax, umin, dt);
     
     # Transformation des commandes longitudinales et de rotation en tension moteurs
-    commandeArriereDroit = -(commandeLongi + commandeLat + commandeRot) # Tension négative pour faire tourner positivement ce moteur
-    commandeArriereGauche = commandeLongi - commandeLat - commandeRot
-    commandeAvantDroit = -(commandeLongi - commandeLat + commandeRot) # Tension négative pour faire tourner positivement ce moteur
-    commandeAvantGauche = commandeLongi + commandeLat - commandeRot
+    commandeArriereDroit = -commandeRot # Tension négative pour faire tourner positivement ce moteur
+    commandeArriereGauche = -commandeRot
+    commandeAvantDroit = -commandeRot # Tension négative pour faire tourner positivement ce moteur
+    commandeAvantGauche = -commandeRot
     
     CommandeMoteurs(commandeArriereDroit, commandeArriereGauche, commandeAvantDroit, commandeAvantGauche)
     
@@ -286,33 +272,8 @@ def CalculVitesse():
             idecimLectureTension = idecimLectureTension - decimErreurLectureTension
             #print("Erreur lecture tension dans Loop")
     else:
-        idecimLectureTension = idecimLectureTension + 1
+        idecimLectureTension = idecimLectureTension + 1    
     
-    # Calcul de la distance mesurée par le capteur ultrason
-    # On fait ce calcul après l'affichage pour savoir combien de temps
-    # il reste pour ne pas perturber la boucle
-    digitalWrite(trig, HIGH)
-    time.sleep(0.00001)
-    digitalWrite(trig, LOW)
-    
-    pulse_duration = 0
-    while (digitalRead(echo) == 0) and (time.time() - tdebut < dt2):
-        pulse_start = time.time()
-
-    while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt2):
-        pulse_end = time.time()
-        last_pulse_duration = pulse_duration
-        pulse_duration = pulse_end - pulse_start
-                
-    distance = last_pulse_duration * 17150
-    #distance = round(distance, 0)
-    if (distance == 0):
-        # C'est probablement une mesure aberrante, on la supprime
-        distance = distancePrec
-    # Filtre sur la distance
-    distanceFiltre = (dt2 * distance + tauFiltreDistance * distancePrec) / (dt2 + tauFiltreDistance)
-    distancePrec = distanceFiltre
-
         
     #print time.time() - tdebut
 
@@ -431,12 +392,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         global socketOK
         print 'connection opened...'
         socketOK = True
-        self.callback = PeriodicCallback(self.sendToSocket, 50)
+        self.callback = PeriodicCallback(self.sendToSocket, 100)
         self.callback.start()
     
 
     def on_message(self, message):
-        global distref, vyref, rapport_xigz, Kpdist, Kidist, Kddist, distanceFiltre, tauFiltreDistance, timeLastReceived, timedOut
+        global psiref, source_psimes, Kprot, Kirot, Kdrot, timeLastReceived, timedOut
             
         jsonMessage = json.loads(message)
         
@@ -444,59 +405,42 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         timeLastReceived = time.time()
         timedOut = False;
         
-        if jsonMessage.get('distref') != None:
-            distref = float(jsonMessage.get('distref'))
-        if jsonMessage.get('vyref') != None:
-            vyref = float(jsonMessage.get('vyref')) / 100.
-        if jsonMessage.get('rapport_xigz') != None:
-            # Choix de la source de la vitesse de rotation mesurée: 0: 100% gyro, 1: 100% vitesse des roues
-            rapport_xigz = float(jsonMessage.get('rapport_xigz'))
+        if jsonMessage.get('psiref') != None:
+            psiref = float(jsonMessage.get('psiref')) * math.pi / 180.
+        if jsonMessage.get('source_psimes') != None:
+            # Choix de la source de la vitesse de rotation mesurée: 1: gyro, 0: vitesse des roues
+            source_psimes = int(jsonMessage.get('source_psimes'))
         if jsonMessage.get('Kp') != None:
-            Kpdist = float(jsonMessage.get('Kp'))
+            Kprot = float(jsonMessage.get('Kp'))
         if jsonMessage.get('Ki') != None:
-            Kidist = float(jsonMessage.get('Ki'))
+            Kirot = float(jsonMessage.get('Ki'))
         if jsonMessage.get('Kd') != None:
-            Kddist = float(jsonMessage.get('Kd'))
-        if jsonMessage.get('tauFiltreDistance') != None:
-            tauFiltreDistance = float(jsonMessage.get('tauFiltreDistance'))
-                
+            Kdrot = float(jsonMessage.get('Kd'))
+                        
         if not socketOK:
-            vyref = 0.
-  
+            psiref = 0.
 
     def on_close(self):
-        global socketOK, vxref, vyref, xiref
+        global socketOK, psiref
         print 'connection closed...'
         socketOK = False
-        vxref = 0.
-        vyref = 0.
-        xiref = 0.
+        psiref = 0.
 
     def sendToSocket(self):
-        global socketOK, vxmes, vymes, ximes, omegaArriereDroit, omegaArriereGauche, omegaAvantDroit, omegaAvantGauche, \
-            distance, distanceFiltre, gz, distref, vyref, commandeLongi, commandeLat
+        global socketOK, psimes, omegaArriereDroit, omegaArriereGauche, omegaAvantDroit, omegaAvantGauche, \
+            gz, intgz, psiref, commandeRot
         
         tcourant = time.time() - T0
         aEnvoyer = json.dumps({'Temps':("%.2f" % tcourant), \
-                                'consigne_distance':("%d" % distref), \
-                                'consigne_vy':("%.2f" % (100 * vyref)), \
-                                'vxmes':("%.2f" % vxmes), \
-                                'vymes':("%.2f" % (100 * vymes)), \
-                                'ximes':("%.2f" % ximes), \
-                                'distance':("%d" % distance), \
-                                'distanceFiltre':("%d" % distanceFiltre), \
-                                'commandeLongi':("%.2f" % commandeLongi), \
-                                'commandeLat':("%.2f" % commandeLat), \
-                                'gz':("%.2f" % gz), \
+                                'consigne_psi':("%.2f" % (psiref*180/math.pi)), \
+                                'psimes':("%.2f" % (psimes*180/math.pi)), \
+                                'intgz':("%.2f" % (intgz*180/math.pi)), \
+                                'commande_rotation':("%.2f" % commandeRot), \
                                 'Raw':("%.2f" % tcourant) \
-                                + "," + ("%.2f" % vxmes) \
-                                + "," + ("%.2f" % (100 * vymes)) \
-                                + "," + ("%.2f" % ximes) \
-                                + "," + ("%d" % distance) \
-                                + "," + ("%d" % distanceFiltre) \
-                                + "," + ("%.2f" % commandeLongi) \
-                                + "," + ("%.2f" % commandeLat) \
-                                + "," + ("%.2f" % gz) \
+                                + "," + ("%.2f" % (psiref*180/math.pi)) \
+                                + "," + ("%.2f" % (psimes*180/math.pi)) \
+                                + "," + ("%.2f" % (intgz*180/math.pi)) \
+                                + "," + ("%.2f" % commandeRot) \
                                 })
                                 
         if socketOK:
@@ -531,11 +475,9 @@ def startTornado():
 
 # Gestion du CTRL-C
 def signal_handler(signal, frame):
-    global vxref, vyref, xiref
+    global psiref
     print 'Sortie du programme'
-    vxref = 0.
-    vyref = 0.
-    xiref = 0.
+    psiref = 0.
     CommandeMoteurs(0, 0, 0, 0)
     sys.exit(0)
 

@@ -7,16 +7,13 @@
 # http://boutique.3sigma.fr/12-robots
 #
 # Auteur: 3Sigma
-# Version 1.1.1 - 16/12/2016
+# Version 1.1.2 - 30/01/2017
 ##################################################################################
 
 # Importe les fonctions Arduino pour Python
-from pyduino_pcduino import *
+from pyduino import *
 
-# Imports pour la communication i2c avec l'Arduino Mega
-from mega import Mega
-mega = Mega()
-
+# Imports Généraux
 import time, sched
 import os
 import threading
@@ -38,9 +35,17 @@ import tornado.websocket
 import tornado.template
 
 # Gestion de l'IMU
-import FaBo9Axis_MPU9250
+from mpu9250 import MPU9250
 
+# Nom de l'hostname (utilisé ensuite pour savoir sur quel système
+# tourne ce programme)
+hostname = socket.gethostname()
 
+# Imports pour la communication i2c avec l'Arduino Mega
+from mega import Mega
+mega = Mega(hostname = hostname)
+
+# Moteurs
 Nmoy = 1
 
 omegaArriereDroit = 0.
@@ -130,9 +135,7 @@ while not lectureTensionOK:
     except:
         print("Erreur lecture tension")
 
-# Déclarations pour le capteur de distance
-trig = 10
-echo = 13
+# Capteur de distance
 pulse_start = 0
 pulse_end = 0
 pulse_duration = 0
@@ -142,29 +145,55 @@ distancePrec = 0
 distanceFiltre = 0
 tauFiltreDistance = 0.03
 
-# Déclaration pour l'IMU
+if (hostname == "pcduino"):
+    trig = 10
+    echo = 13
+    # Initialisation
+    pinMode(trig, OUTPUT)
+    pinMode(echo, INPUT)
+elif (hostname == "raspberrypi"):
+    import RPi.GPIO as GPIO
+    GPIO.setmode(GPIO.BCM)
+    trig = 3 # GPIO22
+    echo = 23
+    # Initialisation
+    pinMode(trig, OUTPUT)
+    GPIO.setup(echo,GPIO.IN)
+else:
+    # pcDuino par défaut
+    trig = 10
+    echo = 13
+    # Initialisation
+    pinMode(trig, OUTPUT)
+    pinMode(echo, INPUT)
+
+    
+# Initialisation de l'IMU
 gz = 0.
+if (hostname == "pcduino"):
+    I2CBUS = 2
+elif (hostname == "raspberrypi"):
+    I2CBUS = 1
+else:
+    # pcDuino par défaut
+    I2CBUS = 2
+    
+initIMU_OK = False
+while not initIMU_OK:
+    try:
+        imu = MPU9250(i2cbus=I2CBUS, address=0x69)
+        initIMU_OK = True
+    except:
+        print("Erreur init IMU")
+
 
 #--- setup --- 
 def setup():
-    global imu
-    
-    # Initialisation de l'IMU
-    initIMU_OK = False
-    while not initIMU_OK:
-        try:
-            imu = FaBo9Axis_MPU9250.MPU9250()
-            initIMU_OK = True
-        except:
-            print("Erreur init IMU")
     
     # Initialisation des moteurs
     CommandeMoteurs(0, 0, 0, 0)
     
     # Initialisation du capteur de distance
-    pinMode(trig, OUTPUT)
-    pinMode(echo, INPUT)
-    
     digitalWrite(trig, LOW)
     print "Attente du capteur de distance"
     time.sleep(2)
@@ -191,7 +220,7 @@ def CalculVitesse():
         codeurArriereDroitDeltaPosPrec, codeurArriereGaucheDeltaPosPrec, codeurAvantDroitDeltaPosPrec, codeurAvantGaucheDeltaPosPrec, tprec, \
         idecimLectureTension, decimLectureTension, decimErreurLectureTension, tensionAlim, \
         pulse_start, pulse_end, pulse_duration, last_pulse_duration, distance, idecimDistance, decimDistance, distancePrec, \
-        distanceFiltre, tauFiltreDistance, imu, gz, R, W, vxmes, vymes, ximes, vxref, vyref, xiref, font, source_ximes
+        distanceFiltre, tauFiltreDistance, imu, gz, R, W, vxmes, vymes, ximes, vxref, vyref, xiref, font, source_ximes, hostname
     
     tdebut = time.time()
         
@@ -216,7 +245,7 @@ def CalculVitesse():
         codeurAvantDroitDeltaPosPrec = codeurAvantDroitDeltaPos
         codeurAvantGaucheDeltaPosPrec = codeurAvantGaucheDeltaPos
     except:
-        #print "Error getting data"
+        #print "Erreur lecture codeurs"
         codeurArriereDroitDeltaPos = codeurArriereDroitDeltaPosPrec
         codeurArriereGaucheDeltaPos = codeurArriereGaucheDeltaPosPrec
         codeurAvantDroitDeltaPos = codeurAvantDroitDeltaPosPrec
@@ -288,14 +317,35 @@ def CalculVitesse():
         time.sleep(0.00001)
         digitalWrite(trig, LOW)
         
-        pulse_duration = 0
-        while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
-            pulse_start = time.time()
+        if (hostname == "pcduino"):
+            pulse_duration = 0
+            while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
+                pulse_start = time.time()
 
-        while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-            pulse_end = time.time()
-            last_pulse_duration = pulse_duration
-            pulse_duration = pulse_end - pulse_start
+            while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
+                pulse_end = time.time()
+                last_pulse_duration = pulse_duration
+                pulse_duration = pulse_end - pulse_start
+                
+        elif (hostname == "raspberrypi"):
+            pulse_duration = 0
+            while (GPIO.input(echo) == 0) and (time.time() - tdebut < dt):
+                pulse_start = time.time()
+
+            while (GPIO.input(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
+                pulse_end = time.time()
+                last_pulse_duration = pulse_duration
+                pulse_duration = pulse_end - pulse_start
+                
+        else:
+            pulse_duration = 0
+            while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
+                pulse_start = time.time()
+
+            while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
+                pulse_end = time.time()
+                last_pulse_duration = pulse_duration
+                pulse_duration = pulse_end - pulse_start
                     
         distance = last_pulse_duration * 17150
         distance = round(distance, 0)
