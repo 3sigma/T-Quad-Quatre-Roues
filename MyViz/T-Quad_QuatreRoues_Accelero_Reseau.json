@@ -1,0 +1,241 @@
+{
+	"version": 1,
+	"allow_edit": true,
+	"plugins": [],
+	"panes": [
+		{
+			"title": "Télémétrie",
+			"width": 1,
+			"row": {
+				"2": 9,
+				"3": 1,
+				"4": 1,
+				"5": 7
+			},
+			"col": {
+				"2": 2,
+				"3": 2,
+				"4": 3,
+				"5": 3
+			},
+			"col_width": "2",
+			"widgets": [
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Vitesses longitudinales (m/s)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"consigne_vx\"]",
+							"datasources[\"ws\"][\"vxmes\"]"
+						],
+						"y_axis_min_range": "-0.2,0.2",
+						"y2_axis_min_range": "-10,10",
+						"include_legend": true,
+						"legendStr": "vxref,vxmes",
+						"height": 3,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Vitesses latérales (m/s)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"consigne_vy\"]",
+							"datasources[\"ws\"][\"vymes\"]"
+						],
+						"y_axis_min_range": "-0.2,0.2",
+						"y2_axis_min_range": "-10,10",
+						"include_legend": true,
+						"legendStr": "vyref, vymes",
+						"height": 3,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Vitesses de rotation (rad/s)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"consigne_xi\"]",
+							"datasources[\"ws\"][\"ximes\"]",
+							"datasources[\"ws\"][\"gz\"]"
+						],
+						"y_axis_min_range": "-0.1,0.1",
+						"y2_axis_min_range": "-10,10",
+						"include_legend": true,
+						"legendStr": "xiref,ximes,xigyro",
+						"height": 3,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Accélérations (m/s²)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"ax\"]",
+							"datasources[\"ws\"][\"ay\"]"
+						],
+						"y_axis_min_range": "-10,10",
+						"y2_axis_min_range": "-10,10",
+						"include_legend": true,
+						"legendStr": "Ax,Ay",
+						"height": 3,
+						"pausable": true
+					}
+				},
+				{
+					"type": "plot",
+					"settings": {
+						"title": "Vitesses moteurs (rad/s)",
+						"xaxis": "datasource_column",
+						"time": "datasources[\"ws\"][\"Temps\"]",
+						"time_window": 10,
+						"value": [
+							"datasources[\"ws\"][\"omegaArriereDroit\"]",
+							"datasources[\"ws\"][\"omegaArriereGauche\"]",
+							"datasources[\"ws\"][\"omegaAvantDroit\"]",
+							"datasources[\"ws\"][\"omegaAvantGauche\"]"
+						],
+						"y_axis_min_range": "-1,1",
+						"y2_axis_min_range": "-10,10",
+						"include_legend": true,
+						"legendStr": "Arrière droit,Arrière gauche,Avant droit,Avant gauche",
+						"height": 3,
+						"pausable": true
+					}
+				}
+			]
+		},
+		{
+			"title": "Démarrage",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 9
+			},
+			"col": {
+				"3": 1,
+				"4": 2
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "sshcommand",
+					"settings": {
+						"title": "Marche / Arrêt de l'application",
+						"style": "switch",
+						"host": "192.168.0.199",
+						"login": "root",
+						"password": "tquad",
+						"oncommand": "/root/programmes_python/startQuatreRoues_Accelero.sh",
+						"offcommand": "/root/programmes_python/stopPython.sh",
+						"ontext": "ON",
+						"offtext": "OFF",
+						"initialstate": false,
+						"caption": "Switch ON"
+					}
+				}
+			]
+		},
+		{
+			"title": "Pilotage",
+			"width": 1,
+			"row": {
+				"3": 5,
+				"4": 1
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "joypad4roues",
+					"settings": {
+						"title": "Vitesses",
+						"variablevxref": "datasources[\"ws\"][\"vxref\"]",
+						"variablevyref": "datasources[\"ws\"][\"vyref\"]",
+						"variablexiref": "datasources[\"ws\"][\"xiref\"]"
+					}
+				}
+			]
+		},
+		{
+			"title": "Mesure de la vitesse de rotation",
+			"width": 1,
+			"row": {
+				"3": 17,
+				"4": 17
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "switchbutton",
+					"settings": {
+						"variable": "datasources[\"ws\"][\"source_ximes\"]",
+						"yestext": "Gyro",
+						"notext": "Odo",
+						"initialstate": false
+					}
+				}
+			]
+		},
+		{
+			"title": "Moniteur",
+			"width": 1,
+			"row": {
+				"3": 21,
+				"4": 23
+			},
+			"col": {
+				"3": 1,
+				"4": 1
+			},
+			"col_width": "1",
+			"widgets": [
+				{
+					"type": "textarea",
+					"settings": {
+						"nblines_window": "10",
+						"value": [
+							"datasources[\"ws\"][\"Raw\"]"
+						]
+					}
+				}
+			]
+		}
+	],
+	"datasources": [
+		{
+			"name": "ws",
+			"type": "websocket",
+			"settings": {
+				"host": "ws://192.168.0.199:9090/ws",
+				"variables_to_send": "vxref,vyref,xiref,source_ximes",
+				"refresh_rate": "500",
+				"checksum": "none",
+				"name": "ws"
+			}
+		}
+	],
+	"columns": 3
+}
