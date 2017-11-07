@@ -7,7 +7,7 @@
 # http://boutique.3sigma.fr/12-robots
 #
 # Auteur: 3Sigma
-# Version 1.1.2 - 30/01/2017
+# Version 1.2.0 - 31/10/2017
 ##################################################################################
 
 # Importe les fonctions Arduino pour Python
@@ -121,8 +121,6 @@ idecimLectureTension = 0
 decimLectureTension = 6000
 decimErreurLectureTension = 100
 
-idecimDistance = 0
-decimDistance = 20
 # Mesure de la tension de la batterie
 # On la contraint à être supérieure à 7V, pour éviter une division par
 # zéro en cas de problème quelconque
@@ -136,37 +134,12 @@ while not lectureTensionOK:
         print("Erreur lecture tension")
 
 # Capteur de distance
-pulse_start = 0
-pulse_end = 0
-pulse_duration = 0
-last_pulse_duration = 0
+idecimDistance = 0
+decimDistance = 20
 distance = 0
 distancePrec = 0
 distanceFiltre = 0
 tauFiltreDistance = 0.03
-
-if (hostname == "pcduino"):
-    trig = 10
-    echo = 13
-    # Initialisation
-    pinMode(trig, OUTPUT)
-    pinMode(echo, INPUT)
-elif (hostname == "raspberrypi"):
-    import RPi.GPIO as GPIO
-    GPIO.setmode(GPIO.BCM)
-    trig = 3 # GPIO22
-    echo = 23
-    # Initialisation
-    pinMode(trig, OUTPUT)
-    GPIO.setup(echo,GPIO.IN)
-else:
-    # pcDuino par défaut
-    trig = 10
-    echo = 13
-    # Initialisation
-    pinMode(trig, OUTPUT)
-    pinMode(echo, INPUT)
-
     
 # Initialisation de l'IMU
 ax = 0.
@@ -195,15 +168,6 @@ def setup():
     # Initialisation des moteurs
     CommandeMoteurs(0, 0, 0, 0)
     
-    # Initialisation du capteur de distance
-    digitalWrite(trig, LOW)
-    print "Attente du capteur de distance"
-    time.sleep(2)
-    
-    digitalWrite(trig, HIGH)
-    time.sleep(0.00001)
-    digitalWrite(trig, LOW)
-
     
 # -- fin setup -- 
  
@@ -221,7 +185,7 @@ def CalculVitesse():
         commandeArriereDroit, commandeArriereGauche, commandeAvantDroit, commandeAvantGauche, \
         codeurArriereDroitDeltaPosPrec, codeurArriereGaucheDeltaPosPrec, codeurAvantDroitDeltaPosPrec, codeurAvantGaucheDeltaPosPrec, tprec, \
         idecimLectureTension, decimLectureTension, decimErreurLectureTension, tensionAlim, \
-        pulse_start, pulse_end, pulse_duration, last_pulse_duration, distance, idecimDistance, decimDistance, distancePrec, \
+        distance, idecimDistance, decimDistance, distancePrec, \
         distanceFiltre, tauFiltreDistance, imu, gz, R, W, vxmes, vymes, ximes, vxref, vyref, xiref, font, source_ximes, hostname, ax, ay
     
     tdebut = time.time()
@@ -317,45 +281,20 @@ def CalculVitesse():
     # On fait ce calcul après l'affichage pour savoir combien de temps
     # il reste pour ne pas perturber la boucle
     if idecimDistance >= decimDistance:            
-        idecimDistance = 0
-        digitalWrite(trig, HIGH)
-        time.sleep(0.00001)
-        digitalWrite(trig, LOW)
-        
-        if (hostname == "pcduino"):
-            pulse_duration = 0
-            while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
-                pulse_start = time.time()
-
-            while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-                pulse_end = time.time()
-                last_pulse_duration = pulse_duration
-                pulse_duration = pulse_end - pulse_start
-                
-        elif (hostname == "raspberrypi"):
-            pulse_duration = 0
-            while (GPIO.input(echo) == 0) and (time.time() - tdebut < dt):
-                pulse_start = time.time()
-
-            while (GPIO.input(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-                pulse_end = time.time()
-                last_pulse_duration = pulse_duration
-                pulse_duration = pulse_end - pulse_start
-                
-        else:
-            pulse_duration = 0
-            while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
-                pulse_start = time.time()
-
-            while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-                pulse_end = time.time()
-                last_pulse_duration = pulse_duration
-                pulse_duration = pulse_end - pulse_start
-                    
-        distance = last_pulse_duration * 17150
-        distance = round(distance, 0)
+        idecimDistance = 0            
+                                
+        try:
+            distance = mega.read_distance()
+            if distance == 0:
+                # Correspond en fait à une distance supérieure à 200 cm
+                distance = 200
+            # print "Distance: ", distance, " cm"
+        except:
+            print "Probleme lecture distance"
+            pass
+            
         # Filtre sur la distance
-        distanceFiltre = (dt * distance + tauFiltreDistance * distancePrec) / (dt + tauFiltreDistance)
+        distanceFiltre = (dt2 * distance + tauFiltreDistance * distancePrec) / (dt2 + tauFiltreDistance)
         distancePrec = distanceFiltre
     else:
         idecimDistance = idecimDistance + 1

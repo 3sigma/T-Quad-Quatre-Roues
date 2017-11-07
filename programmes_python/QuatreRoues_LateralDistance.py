@@ -145,36 +145,10 @@ while not lectureTensionOK:
         print("Erreur lecture tension")
 
 # Capteur de distance
-pulse_start = 0
-pulse_end = 0
-pulse_duration = 0
-last_pulse_duration = 0
 distance = 0
 distancePrec = 0
 distanceFiltre = 0
 tauFiltreDistance = 0.1
-
-if (hostname == "pcduino"):
-    trig = 10
-    echo = 13
-    # Initialisation
-    pinMode(trig, OUTPUT)
-    pinMode(echo, INPUT)
-elif (hostname == "raspberrypi"):
-    import RPi.GPIO as GPIO
-    GPIO.setmode(GPIO.BCM)
-    trig = 3 # GPIO22
-    echo = 23
-    # Initialisation
-    pinMode(trig, OUTPUT)
-    GPIO.setup(echo,GPIO.IN)
-else:
-    # pcDuino par défaut
-    trig = 10
-    echo = 13
-    # Initialisation
-    pinMode(trig, OUTPUT)
-    pinMode(echo, INPUT)
 
 # Initialisation de l'IMU
 gz = 0.
@@ -201,15 +175,6 @@ def setup():
     # Initialisation des moteurs
     CommandeMoteurs(0, 0, 0, 0)
     
-    # Initialisation du capteur de distance
-    digitalWrite(trig, LOW)
-    print "Attente du capteur de distance"
-    time.sleep(2)
-    
-    digitalWrite(trig, HIGH)
-    time.sleep(0.00001)
-    digitalWrite(trig, LOW)
-
     
 # -- fin setup -- 
  
@@ -227,7 +192,7 @@ def CalculVitesse():
         commandeArriereDroit, commandeArriereGauche, commandeAvantDroit, commandeAvantGauche, \
         codeurArriereDroitDeltaPosPrec, codeurArriereGaucheDeltaPosPrec, codeurAvantDroitDeltaPosPrec, codeurAvantGaucheDeltaPosPrec, tprec, \
         idecimLectureTension, decimLectureTension, decimErreurLectureTension, tensionAlim, commandeLongi, commandeLat, commandeRot, \
-        pulse_start, pulse_end, pulse_duration, last_pulse_duration, distance, distancePrec, \
+        distance, distancePrec, \
         distanceFiltre, tauFiltreDistance, imu, gz, R, W, vxmes, vymes, ximes, distref, vyref, xiref, font, rapport_xigz, \
         Kpdist, Kidist, Kddist, Tfdist, hostname
     
@@ -320,45 +285,16 @@ def CalculVitesse():
     # Calcul de la distance mesurée par le capteur ultrason
     # On fait ce calcul après l'affichage pour savoir combien de temps
     # il reste pour ne pas perturber la boucle
-    digitalWrite(trig, HIGH)
-    time.sleep(0.00001)
-    digitalWrite(trig, LOW)
-    
-    if (hostname == "pcduino"):
-        pulse_duration = 0
-        while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
-            pulse_start = time.time()
-
-        while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-            pulse_end = time.time()
-            last_pulse_duration = pulse_duration
-            pulse_duration = pulse_end - pulse_start
-            
-    elif (hostname == "raspberrypi"):
-        pulse_duration = 0
-        while (GPIO.input(echo) == 0) and (time.time() - tdebut < dt):
-            pulse_start = time.time()
-
-        while (GPIO.input(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-            pulse_end = time.time()
-            last_pulse_duration = pulse_duration
-            pulse_duration = pulse_end - pulse_start
-            
-    else:
-        pulse_duration = 0
-        while (digitalRead(echo) == 0) and (time.time() - tdebut < dt):
-            pulse_start = time.time()
-
-        while (digitalRead(echo) == 1) and (pulse_duration < 0.01166) and (time.time() - tdebut < dt):
-            pulse_end = time.time()
-            last_pulse_duration = pulse_duration
-            pulse_duration = pulse_end - pulse_start
-                
-    distance = last_pulse_duration * 17150
-    #distance = round(distance, 0)
-    if (distance == 0):
-        # C'est probablement une mesure aberrante, on la supprime
-        distance = distancePrec
+    try:
+        distance = mega.read_distance()
+        if distance == 0:
+            # Correspond en fait à une distance supérieure à 200 cm
+            distance = 200
+        # print "Distance: ", distance, " cm"
+    except:
+        print "Probleme lecture distance"
+        pass
+        
     # Filtre sur la distance
     distanceFiltre = (dt2 * distance + tauFiltreDistance * distancePrec) / (dt2 + tauFiltreDistance)
     distancePrec = distanceFiltre
