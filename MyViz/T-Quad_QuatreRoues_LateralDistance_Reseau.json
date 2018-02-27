@@ -4,70 +4,15 @@
 	"plugins": [],
 	"panes": [
 		{
-			"title": "Démarrage",
-			"width": 1,
-			"row": {
-				"3": 1,
-				"4": 9
-			},
-			"col": {
-				"3": 1,
-				"4": 2
-			},
-			"col_width": 1,
-			"widgets": [
-				{
-					"type": "sshcommand",
-					"settings": {
-						"title": "Marche / Arrêt de l'application",
-						"host": "192.168.0.199",
-						"login": "root",
-						"password": "tquad",
-						"oncommand": "/root/programmes_python/startQuatreRoues_LateralDistance.sh",
-						"offcommand": "/root/programmes_python/stopPython.sh",
-						"ontext": "ON",
-						"offtext": "OFF",
-						"initialstate": false
-					}
-				}
-			]
-		},
-		{
-			"title": "Consigne de vitesse latérale (cm/s)",
-			"width": 1,
-			"row": {
-				"3": 1,
-				"4": 5
-			},
-			"col": {
-				"3": 3,
-				"4": 1
-			},
-			"col_width": 1,
-			"widgets": [
-				{
-					"type": "slider",
-					"settings": {
-						"title": "Suivant l'axe -y",
-						"variable": "datasources[\"ws\"][\"vyref\"]",
-						"initialvalue": 0,
-						"min": -50,
-						"max": 50,
-						"resolution": 0,
-						"resetvalue": 0,
-						"resetcaption": "Réinitialisation"
-					}
-				}
-			]
-		},
-		{
 			"title": "Consigne de distance (cm)",
 			"width": 1,
 			"row": {
-				"3": 1
+				"3": 1,
+				"4": 1
 			},
 			"col": {
-				"3": 2
+				"3": 2,
+				"4": 2
 			},
 			"col_width": 1,
 			"widgets": [
@@ -81,28 +26,6 @@
 						"resolution": 0,
 						"resetvalue": 20,
 						"resetcaption": "Réinitialisation"
-					}
-				}
-			]
-		},
-		{
-			"title": "Distance filtrée",
-			"width": 1,
-			"row": {
-				"3": 5
-			},
-			"col": {
-				"3": 1
-			},
-			"col_width": 1,
-			"widgets": [
-				{
-					"type": "text_widget",
-					"settings": {
-						"size": "regular",
-						"value": "datasources[\"ws\"][\"distanceFiltre\"]",
-						"animate": false,
-						"units": "cm"
 					}
 				}
 			]
@@ -181,15 +104,104 @@
 			]
 		},
 		{
+			"title": "Consigne de vitesse latérale (cm/s)",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 5,
+				"5": 5
+			},
+			"col": {
+				"3": 3,
+				"4": 1,
+				"5": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "slider",
+					"settings": {
+						"title": "Suivant l'axe -y",
+						"variable": "datasources[\"ws\"][\"vyref\"]",
+						"initialvalue": 0,
+						"min": -50,
+						"max": 50,
+						"resolution": 0,
+						"resetvalue": 0,
+						"resetcaption": "Réinitialisation"
+					}
+				}
+			]
+		},
+		{
+			"title": "Distance filtrée",
+			"width": 1,
+			"row": {
+				"3": 5,
+				"4": 7,
+				"5": 5
+			},
+			"col": {
+				"3": 1,
+				"4": 2,
+				"5": 1
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "text_widget",
+					"settings": {
+						"size": "regular",
+						"value": "datasources[\"ws\"][\"distanceFiltre\"]",
+						"animate": false,
+						"units": "cm"
+					}
+				}
+			]
+		},
+		{
+			"title": "Démarrage",
+			"width": 1,
+			"row": {
+				"3": 1,
+				"4": 1,
+				"5": 9
+			},
+			"col": {
+				"3": 1,
+				"4": 1,
+				"5": 2
+			},
+			"col_width": 1,
+			"widgets": [
+				{
+					"type": "sshcommand",
+					"settings": {
+						"title": "Marche / Arrêt de l'application",
+						"host": "192.168.0.199",
+						"login": "root",
+						"password": "tquad",
+						"oncommand": "/root/programmes_python/startQuatreRoues_LateralDistance.sh",
+						"offcommand": "/root/programmes_python/stopPython.sh",
+						"ontext": "ON",
+						"offtext": "OFF",
+						"initialstate": false
+					}
+				}
+			]
+		},
+		{
 			"title": "Constante de temps filtre distance",
 			"width": 1,
 			"row": {
 				"3": 9,
-				"4": 9
+				"4": 11,
+				"5": 9
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 1,
+				"5": 1
 			},
 			"col_width": 1,
 			"widgets": [
@@ -212,11 +224,13 @@
 			"width": 1,
 			"row": {
 				"3": 15,
-				"4": 9
+				"4": 11,
+				"5": 9
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 2,
+				"5": 1
 			},
 			"col_width": 1,
 			"widgets": [
@@ -266,11 +280,13 @@
 			"width": 1,
 			"row": {
 				"3": 29,
-				"4": 17
+				"4": 17,
+				"5": 17
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 1,
+				"5": 1
 			},
 			"col_width": 1,
 			"widgets": [
@@ -294,11 +310,13 @@
 			"width": 1,
 			"row": {
 				"3": 35,
-				"4": 23
+				"4": 23,
+				"5": 23
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 1,
+				"5": 1
 			},
 			"col_width": "1",
 			"widgets": [
@@ -326,5 +344,5 @@
 			}
 		}
 	],
-	"columns": 3
+	"columns": 4
 }

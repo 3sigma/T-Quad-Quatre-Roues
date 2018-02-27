@@ -15,7 +15,7 @@
 			"col": {
 				"2": 2,
 				"3": 2,
-				"4": 3,
+				"4": 2,
 				"5": 3
 			},
 			"col_width": "2",
@@ -32,10 +32,14 @@
 							"datasources[\"ws\"][\"vxmes\"]"
 						],
 						"y_axis_min_range": "-0.2,0.2",
+						"offset_y": "0",
+						"y2_axis_min_range": "-10,10",
+						"offset_y2": "0",
 						"include_legend": true,
 						"legendStr": "vxref,vxmes",
 						"height": 3,
-						"pausable": true
+						"pausable": true,
+						"refreshperiod": 20
 					}
 				},
 				{
@@ -50,10 +54,14 @@
 							"datasources[\"ws\"][\"vymes\"]"
 						],
 						"y_axis_min_range": "-0.2,0.2",
+						"offset_y": "0",
+						"y2_axis_min_range": "-10,10",
+						"offset_y2": "0",
 						"include_legend": true,
 						"legendStr": "vyref, vymes",
 						"height": 3,
-						"pausable": true
+						"pausable": true,
+						"refreshperiod": 20
 					}
 				},
 				{
@@ -69,10 +77,14 @@
 							"datasources[\"ws\"][\"gz\"]"
 						],
 						"y_axis_min_range": "-0.1,0.1",
+						"offset_y": "0",
+						"y2_axis_min_range": "-10,10",
+						"offset_y2": "0",
 						"include_legend": true,
 						"legendStr": "xiref,ximes,xigyro",
 						"height": 3,
-						"pausable": true
+						"pausable": true,
+						"refreshperiod": 20
 					}
 				},
 				{
@@ -87,10 +99,14 @@
 							"datasources[\"ws\"][\"distanceFiltre\"]"
 						],
 						"y_axis_min_range": "-10,10",
+						"offset_y": "0",
+						"y2_axis_min_range": "-10,10",
+						"offset_y2": "0",
 						"include_legend": true,
 						"legendStr": "distance, distance filtrée",
 						"height": 3,
-						"pausable": true
+						"pausable": true,
+						"refreshperiod": 20
 					}
 				}
 			]
@@ -100,11 +116,13 @@
 			"width": 1,
 			"row": {
 				"3": 1,
-				"4": 9
+				"4": 1,
+				"5": 9
 			},
 			"col": {
 				"3": 1,
-				"4": 2
+				"4": 1,
+				"5": 2
 			},
 			"col_width": 1,
 			"widgets": [
@@ -129,11 +147,13 @@
 			"width": 1,
 			"row": {
 				"3": 5,
-				"4": 1
+				"4": 5,
+				"5": 1
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 1,
+				"5": 1
 			},
 			"col_width": 1,
 			"widgets": [
@@ -153,11 +173,13 @@
 			"width": 1,
 			"row": {
 				"3": 17,
-				"4": 17
+				"4": 17,
+				"5": 17
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 1,
+				"5": 1
 			},
 			"col_width": 1,
 			"widgets": [
@@ -166,7 +188,9 @@
 					"settings": {
 						"variable": "datasources[\"ws\"][\"source_ximes\"]",
 						"yestext": "Gyro",
+						"yesvalue": "1",
 						"notext": "Odo",
+						"novalue": "0",
 						"initialstate": false
 					}
 				}
@@ -177,11 +201,13 @@
 			"width": 1,
 			"row": {
 				"3": 21,
-				"4": 23
+				"4": 21,
+				"5": 23
 			},
 			"col": {
 				"3": 1,
-				"4": 1
+				"4": 1,
+				"5": 1
 			},
 			"col_width": "1",
 			"widgets": [
@@ -210,5 +236,5 @@
 			}
 		}
 	],
-	"columns": 3
+	"columns": 4
 }
